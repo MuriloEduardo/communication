@@ -9,10 +9,12 @@
             "type": "debugpy",
             "request": "launch",
             "module": "app.main",
-            "args": ["--http"],
+            "args": [
+                "--http"
+            ],
             "justMyCode": true,
             "cwd": "${workspaceFolder}",
-            "python": "/home/murilo/.cache/pypoetry/virtualenvs/communication-7viFlPkO-py3.12/bin/python"
+            "python": "${workspaceFolder}/.venv/bin/python"
         },
         {
             "name": "Python: All Workers",
@@ -21,17 +23,20 @@
             "module": "app.main",
             "justMyCode": true,
             "cwd": "${workspaceFolder}",
-            "python": "/home/murilo/.cache/pypoetry/virtualenvs/communication-7viFlPkO-py3.12/bin/python"
+            "python": "${workspaceFolder}/.venv/bin/python"
         },
         {
-            "name": "Python: Generate Worker",
+            "name": "Python: Send Message Worker",
             "type": "debugpy",
             "request": "launch",
             "module": "app.main",
-            "args": ["--workers", "generate"],
+            "args": [
+                "--workers",
+                "send_message"
+            ],
             "justMyCode": true,
             "cwd": "${workspaceFolder}",
-            "python": "/home/murilo/.cache/pypoetry/virtualenvs/communication-7viFlPkO-py3.12/bin/python"
+            "python": "${workspaceFolder}/.venv/bin/python"
         }
     ]
 }
