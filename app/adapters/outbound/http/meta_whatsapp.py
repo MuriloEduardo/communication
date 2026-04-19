@@ -32,7 +32,14 @@ class MetaWhatsAppClient:
                 "text": {"body": body},
             },
         )
-        response.raise_for_status()
+        if not response.is_success:
+            logger.error(
+                "whatsapp.api_error",
+                status=response.status_code,
+                body=response.text,
+                to=to,
+            )
+            response.raise_for_status()
         data = response.json()
         msg_id = (data.get("messages") or [{}])[0].get("id")
         logger.info("whatsapp.sent", to=to, message_id=msg_id)
