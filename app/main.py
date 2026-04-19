@@ -11,7 +11,7 @@ from app.workers import available_workers
 from app.workers.runner import WorkerRunner
 
 # Import workers to trigger registration
-import app.workers.generate  # noqa: F401
+import app.workers.send_message  # noqa: F401
 
 structlog.configure(
     processors=[

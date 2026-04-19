@@ -1,6 +1,7 @@
 """
 Communication service entities.
-Uses shared schemas for cross-service communication.
+Communication only deals with channel messages (inbound/outbound).
+It doesn't know about "generation" - just receives and sends messages.
 """
 
 import sys
@@ -12,14 +13,10 @@ from shared_schemas import (
     ChannelMetadata,
     InboundChannelMessage,
     OutboundChannelMessage,
-    CognitionRequest as GenerateRequest,
-    CognitionResponse as GenerateResponse,
 )
 
 __all__ = [
     "ChannelMetadata",
     "InboundChannelMessage",
     "OutboundChannelMessage",
-    "GenerateRequest",
-    "GenerateResponse",
 ]
