@@ -45,18 +45,18 @@ class MetaWhatsAppClient:
         logger.info("whatsapp.sent", to=to, message_id=msg_id)
         return data
 
-    async def mark_as_read(self, message_id: str) -> None:
+    async def mark_as_read(self, message_id: str, typing: bool = True) -> None:
+        payload: dict = {
+            "messaging_product": "whatsapp",
+            "status": "read",
+            "message_id": message_id,
+        }
+        if typing:
+            payload["typing_indicator"] = {"type": "text"}
         try:
-            resp = await self._client.post(
-                "/messages",
-                json={
-                    "messaging_product": "whatsapp",
-                    "status": "read",
-                    "message_id": message_id,
-                },
-            )
+            resp = await self._client.post("/messages", json=payload)
             resp.raise_for_status()
-            logger.debug("whatsapp.marked_read", message_id=message_id)
+            logger.debug("whatsapp.marked_read", message_id=message_id, typing=typing)
         except Exception:
             logger.warning("whatsapp.mark_read_failed", message_id=message_id)
 

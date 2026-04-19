@@ -34,24 +34,26 @@ async def verify_webhook(
 async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict:
     container = request.app.state.container
     publisher = container.publisher
-
-    raw = payload.model_dump_json().encode()
-
-    await publisher.publish(
-        message=raw,
-        routing_key=ROUTING_KEY,
-        exchange_name=EXCHANGE,
-    )
-
-    # Send read receipts (fire-and-forget)
     whatsapp = container.whatsapp_client
-    if whatsapp:
-        for entry in payload.entry:
-            for change in entry.get("changes", []):
-                for msg in change.get("value", {}).get("messages", []):
-                    msg_id = msg.get("id")
-                    if msg_id:
-                        asyncio.create_task(whatsapp.mark_as_read(msg_id))
+
+    has_messages = False
+    for entry in payload.entry:
+        for change in entry.changes:
+            for msg in change.value.messages:
+                has_messages = True
+
+                # Read receipt + typing indicator (fire-and-forget)
+                if whatsapp and msg.id:
+                    asyncio.create_task(whatsapp.mark_as_read(msg.id))
+
+    # Only forward to workflow when there are actual user messages
+    if has_messages:
+        raw = payload.model_dump_json().encode()
+        await publisher.publish(
+            message=raw,
+            routing_key=ROUTING_KEY,
+            exchange_name=EXCHANGE,
+        )
 
     logger.info("meta.webhook.published", entries=len(payload.entry))
     return {"status": "received"}
