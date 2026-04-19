@@ -23,7 +23,7 @@ logger = structlog.get_logger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Cognition workers")
+    parser = argparse.ArgumentParser(description="Communication workers")
     parser.add_argument(
         "--workers",
         nargs="*",

@@ -7,7 +7,7 @@ from app.ports.inbound.message_handler import MessageHandler
 
 logger = structlog.get_logger(__name__)
 
-EXCHANGE = "cognition.exchange"
+EXCHANGE = "communication.exchange"
 RESPONSE_KEY = "generate.response"
 
 

@@ -6,7 +6,7 @@ from app.workers import worker
 @worker(
     name="generate",
     queue="generate.request",
-    exchange="cognition.exchange",
+    exchange="communication.exchange",
     routing_key="generate.request",
 )
 def create_generate_handler(container: Container) -> GenerateHandler:

@@ -14,5 +14,5 @@ class Settings(BaseSettings):
     rabbitmq_reconnect_delay: float = 5.0
     rabbitmq_max_retries: int = 5
 
-    app_name: str = "cognition"
+    app_name: str = "communication"
     log_level: str = "INFO"
