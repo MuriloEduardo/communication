@@ -1,21 +1,52 @@
 """
-Communication service entities.
-Communication only deals with channel messages (inbound/outbound).
-It doesn't know about "generation" - just receives and sends messages.
+Communication service message entities.
 """
 
-import sys
-from pathlib import Path
+from enum import Enum
+from typing import Any
 
-# Add parent directory to path to import shared_schemas
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
-from shared_schemas import (
-    ChannelMetadata,
-    InboundChannelMessage,
-    OutboundChannelMessage,
-)
+from pydantic import BaseModel, Field
+
+
+class ChannelType(str, Enum):
+    WHATSAPP = "whatsapp"
+    EMAIL = "email"
+    SMS = "sms"
+    TELEGRAM = "telegram"
+    VOICE = "voice"
+
+
+class ChannelMetadata(BaseModel):
+    model_config = {"extra": "allow"}
+
+    channel_type: ChannelType
+    sender_id: str | None = None
+    recipient_id: str | None = None
+    thread_id: str | None = None
+    platform_metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class InboundChannelMessage(BaseModel):
+    model_config = {"extra": "allow"}
+
+    message_id: str
+    content: str
+    channel: ChannelMetadata
+    received_at: str
+    raw_payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class OutboundChannelMessage(BaseModel):
+    message_id: str
+    content: str
+    channel: ChannelMetadata
+    priority: int = 0
+    scheduled_at: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
 
 __all__ = [
+    "ChannelType",
     "ChannelMetadata",
     "InboundChannelMessage",
     "OutboundChannelMessage",
