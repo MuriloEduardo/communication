@@ -16,3 +16,6 @@ class Settings(BaseSettings):
 
     app_name: str = "communication"
     log_level: str = "INFO"
+
+    http_host: str = "0.0.0.0"
+    http_port: int = 8000

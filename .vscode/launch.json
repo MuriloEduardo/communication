@@ -5,13 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: HTTP Server",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "app.main",
+            "args": ["--http"],
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}",
+            "python": "/home/murilo/.cache/pypoetry/virtualenvs/communication-7viFlPkO-py3.12/bin/python"
+        },
+        {
             "name": "Python: All Workers",
             "type": "debugpy",
             "request": "launch",
             "module": "app.main",
             "justMyCode": true,
             "cwd": "${workspaceFolder}",
-            "python": "/home/murilo/.cache/pypoetry/virtualenvs/communication-_f9uhDKh-py3.12/bin/python"
+            "python": "/home/murilo/.cache/pypoetry/virtualenvs/communication-7viFlPkO-py3.12/bin/python"
         },
         {
             "name": "Python: Generate Worker",
@@ -21,7 +31,7 @@
             "args": ["--workers", "generate"],
             "justMyCode": true,
             "cwd": "${workspaceFolder}",
-            "python": "/home/murilo/.cache/pypoetry/virtualenvs/communication-_f9uhDKh-py3.12/bin/python"
+            "python": "/home/murilo/.cache/pypoetry/virtualenvs/communication-7viFlPkO-py3.12/bin/python"
         }
     ]
 }

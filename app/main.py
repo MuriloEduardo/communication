@@ -3,8 +3,10 @@ import asyncio
 import signal
 
 import structlog
+import uvicorn
 
 from app.container import Container
+from app.adapters.inbound.http.server import create_app
 from app.workers import available_workers
 from app.workers.runner import WorkerRunner
 
@@ -23,32 +25,70 @@ logger = structlog.get_logger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Communication workers")
+    parser = argparse.ArgumentParser(description="Communication service")
+    parser.add_argument(
+        "--http",
+        action="store_true",
+        help="Start the HTTP server.",
+    )
     parser.add_argument(
         "--workers",
         nargs="*",
-        default=[],
-        help=f"Workers to start (available: {', '.join(available_workers())}). Empty = all.",
+        default=None,
+        help=f"Start workers (available: {', '.join(available_workers())}). Without names = all.",
     )
     return parser.parse_args()
 
 
+async def run_http(container: Container) -> None:
+    settings = container.settings
+    app = create_app(container)
+
+    config = uvicorn.Config(
+        app,
+        host=settings.http_host,
+        port=settings.http_port,
+        log_level=settings.log_level.lower(),
+    )
+    server = uvicorn.Server(config)
+    await server.serve()
+
+
+async def run_workers(container: Container, names: list[str]) -> None:
+    runner = WorkerRunner(container)
+    await runner.start(*names)
+    resolved = names or available_workers()
+    logger.info("workers.running", workers=resolved)
+
+
 async def main() -> None:
     args = parse_args()
+
+    if not args.http and args.workers is None:
+        logger.error("Specify at least --http or --workers")
+        return
+
     container = Container()
-
-    runner = WorkerRunner(container)
-    await runner.start(*args.workers)
-
-    names = args.workers or available_workers()
-    logger.info("workers.running", workers=names)
-
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, stop.set)
 
-    await stop.wait()
+    tasks: list[asyncio.Task] = []
+
+    if args.workers is not None:
+        worker_names = args.workers if args.workers else []
+        tasks.append(asyncio.create_task(run_workers(container, worker_names)))
+
+    if args.http:
+        tasks.append(asyncio.create_task(run_http(container)))
+
+    if not args.http:
+        await stop.wait()
+
+    if tasks:
+        await asyncio.gather(*tasks)
+
     await container.shutdown()
     logger.info("shutdown.complete")
 
