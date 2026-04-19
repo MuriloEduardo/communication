@@ -11,7 +11,7 @@ from app.workers import available_workers
 from app.workers.runner import WorkerRunner
 
 # Import workers to trigger registration
-import app.workers.send_message  # noqa: F401
+import app.workers.send_message  # noqa: F401  # pylint: disable=unused-import
 
 structlog.configure(
     processors=[
@@ -42,10 +42,10 @@ def parse_args() -> argparse.Namespace:
 
 async def run_http(container: Container) -> None:
     settings = container.settings
-    app = create_app(container)
+    http_app = create_app(container)
 
     config = uvicorn.Config(
-        app,
+        http_app,
         host=settings.http_host,
         port=settings.http_port,
         log_level=settings.log_level.lower(),
