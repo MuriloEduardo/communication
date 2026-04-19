@@ -19,3 +19,5 @@ class Settings(BaseSettings):
 
     http_host: str = "0.0.0.0"
     http_port: int = 8000
+
+    meta_verify_token: str = ""
