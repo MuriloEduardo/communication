@@ -1,3 +1,5 @@
+import asyncio
+
 import structlog
 from fastapi import APIRouter, Query, Request, Response
 
@@ -40,6 +42,16 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
         routing_key=ROUTING_KEY,
         exchange_name=EXCHANGE,
     )
+
+    # Send read receipts (fire-and-forget)
+    whatsapp = container.whatsapp_client
+    if whatsapp:
+        for entry in payload.entry:
+            for change in entry.get("changes", []):
+                for msg in change.get("value", {}).get("messages", []):
+                    msg_id = msg.get("id")
+                    if msg_id:
+                        asyncio.create_task(whatsapp.mark_as_read(msg_id))
 
     logger.info("meta.webhook.published", entries=len(payload.entry))
     return {"status": "received"}

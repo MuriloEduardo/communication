@@ -21,3 +21,5 @@ class Settings(BaseSettings):
     http_port: int = 8000
 
     meta_verify_token: str = ""
+    meta_access_token: str = ""
+    whatsapp_phone_number_id: str = ""

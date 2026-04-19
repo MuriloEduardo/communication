@@ -1,7 +1,7 @@
 import structlog
 
-from app.adapters.outbound.amqp.publisher import RabbitMQPublisher
-from app.domain.entities.message import OutboundChannelMessage
+from app.adapters.outbound.http.meta_whatsapp import MetaWhatsAppClient
+from app.domain.entities.message import ChannelType, OutboundChannelMessage
 from app.ports.inbound.message_handler import MessageHandler
 
 logger = structlog.get_logger(__name__)
@@ -10,11 +10,11 @@ logger = structlog.get_logger(__name__)
 class SendMessageHandler(MessageHandler):
     """
     Handles outbound messages to send via communication channels.
-    This is what communication does - it sends messages, it doesn't "generate" anything.
+    Routes to the appropriate channel adapter (WhatsApp, etc.).
     """
 
-    def __init__(self, publisher: RabbitMQPublisher) -> None:
-        self._publisher = publisher
+    def __init__(self, whatsapp_client: MetaWhatsAppClient | None = None) -> None:
+        self._whatsapp = whatsapp_client
 
     async def handle(
         self, message: bytes, routing_key: str, headers: dict | None = None
@@ -38,14 +38,16 @@ class SendMessageHandler(MessageHandler):
             raise
 
     async def _send_to_channel(self, message: OutboundChannelMessage) -> None:
-        """
-        Send message to the appropriate communication channel.
-        TODO: Implement actual channel sending logic here.
-        """
-        logger.info(
-            "channel.sending",
-            channel_type=message.channel.channel_type,
-            recipient=message.channel.recipient_id,
-            content_preview=message.content[:50],
-        )
-        # TODO: Route to appropriate channel adapter (WhatsApp, Email, etc.)
+        if message.channel.channel_type == ChannelType.WHATSAPP:
+            if not self._whatsapp:
+                logger.warning("whatsapp.not_configured")
+                return
+            await self._whatsapp.send_text(
+                to=message.channel.recipient_id or "",
+                body=message.content,
+            )
+        else:
+            logger.warning(
+                "channel.unsupported",
+                channel_type=message.channel.channel_type,
+            )
