@@ -215,26 +215,61 @@ class MetaWebhookProcessor:
     async def _trigger_typing(
         self, msg_id: str | None, sender: str | None = None
     ) -> None:
-        if not self._whatsapp or not msg_id or not sender:
+        logger.info(
+            "trigger_typing.called",
+            msg_id=msg_id,
+            sender=sender,
+            has_whatsapp=bool(self._whatsapp),
+        )
+        if not self._whatsapp:
+            logger.error(
+                "trigger_typing.skip", reason="no_whatsapp_client", msg_id=msg_id
+            )
+            return
+        if not msg_id:
+            logger.error("trigger_typing.skip", reason="no_msg_id", sender=sender)
+            return
+        if not sender:
+            logger.error("trigger_typing.skip", reason="no_sender", msg_id=msg_id)
             return
 
         async def _read_then_type(wapp=self._whatsapp, mid=msg_id, to=sender) -> None:
+            logger.info("trigger_typing.task_start", msg_id=mid, sender=to)
             await asyncio.sleep(random.uniform(0.3, 0.8))
+            logger.info("trigger_typing.sending_mark_as_read", msg_id=mid)
             await wapp.mark_as_read(mid)
             await asyncio.sleep(random.uniform(0.5, 1.0))
+            logger.info("trigger_typing.sending_typing", to=to)
             await wapp.send_typing(to)
+            logger.info("trigger_typing.task_done", msg_id=mid, sender=to)
 
         asyncio.create_task(_read_then_type())
+        logger.info("trigger_typing.task_created", msg_id=msg_id, sender=sender)
 
     async def _trigger_typing_only(self, sender: str | None) -> None:
-        if not self._whatsapp or not sender:
+        logger.info(
+            "trigger_typing_only.called",
+            sender=sender,
+            has_whatsapp=bool(self._whatsapp),
+        )
+        if not self._whatsapp:
+            logger.error(
+                "trigger_typing_only.skip", reason="no_whatsapp_client", sender=sender
+            )
+            return
+        if not sender:
+            logger.error("trigger_typing_only.skip", reason="no_sender")
             return
 
         async def _type_only(wapp=self._whatsapp, to=sender) -> None:
+            logger.info("trigger_typing_only.task_start", sender=to)
             await asyncio.sleep(random.uniform(0.3, 0.8))
+            logger.info("trigger_typing_only.sending_typing", to=to)
             await wapp.send_typing(to)
+            logger.info("trigger_typing_only.task_done", sender=to)
 
         asyncio.create_task(_type_only())
+        logger.info("trigger_typing_only.task_created", sender=sender)
 
     async def _resolve_quoted_message(
         self,
