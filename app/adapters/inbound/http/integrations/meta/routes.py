@@ -40,6 +40,9 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
     has_text_messages = False
     for entry in payload.entry:
         for change in entry.changes:
+            recipient_id = (
+                change.value.metadata.phone_number_id if change.value.metadata else None
+            )
             for msg in change.value.messages:
                 if msg.type == "reaction":
                     # Reactions: mark read, no typing, no forwarding
@@ -51,6 +54,7 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                             channel="whatsapp",
                             event_type="reaction",
                             sender_id=msg.from_,
+                            recipient_id=recipient_id,
                             message_id=msg.id,
                             metadata={"type": "reaction"},
                         )
@@ -68,6 +72,7 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                         channel="whatsapp",
                         event_type="received",
                         sender_id=msg.from_,
+                        recipient_id=recipient_id,
                         message_id=msg.id,
                         content=getattr(msg.text, "body", None) if msg.text else None,
                     )
