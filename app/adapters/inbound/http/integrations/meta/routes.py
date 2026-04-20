@@ -86,12 +86,17 @@ def _extract_metadata(msg: MetaMessage) -> dict[str, Any]:
 
 
 async def _upload_media(
-    whatsapp, media_storage, media_id: str, mime_type: str, phone_number_id: str
+    whatsapp,
+    media_storage,
+    media_id: str,
+    mime_type: str,
+    phone_number_id: str,
+    sender_phone: str,
 ) -> str:
     """Download media from Meta and upload to S3. Returns pre-signed URL."""
     today = date.today()
     ext = _MIME_EXT.get(mime_type.split(";")[0].strip(), "")
-    key = f"whatsapp/{phone_number_id}/{today.year}/{today.month:02d}/{today.day:02d}/{media_id}{ext}"
+    key = f"whatsapp/{phone_number_id}/{sender_phone}/{today.year}/{today.month:02d}/{today.day:02d}/{media_id}{ext}"
     data, _ = await whatsapp.download_media(media_id)
     return await media_storage.upload_and_sign(data, key, mime_type)
 
@@ -180,6 +185,7 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                                 media.id,
                                 media.mime_type,
                                 phone_number_id or "unknown",
+                                msg.from_ or "unknown",
                             )
                             media_urls[msg.id] = url
                         except Exception:
