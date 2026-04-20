@@ -22,6 +22,17 @@ class MetaTextBody(BaseModel):
     body: str
 
 
+class MetaReaction(BaseModel):
+    message_id: str
+    emoji: str
+
+
+class MetaMessageContext(BaseModel):
+    model_config = {"extra": "allow"}
+    from_: str | None = Field(None, alias="from")
+    id: str | None = None  # noqa: A003
+
+
 class MetaMessage(BaseModel):
     model_config = {"extra": "allow"}
     id: str  # noqa: A003
@@ -30,6 +41,8 @@ class MetaMessage(BaseModel):
     from_: str | None = Field(None, alias="from")
     from_user_id: str | None = None
     text: MetaTextBody | None = None
+    reaction: MetaReaction | None = None
+    context: MetaMessageContext | None = None
 
 
 class MetaStatusPricing(BaseModel):
