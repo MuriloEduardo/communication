@@ -215,7 +215,7 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                 )
 
     if has_text_messages:
-        payload_dict = json.loads(payload.model_dump_json())
+        payload_dict = json.loads(payload.model_dump_json(by_alias=True))
         if media_urls:
             payload_dict["_media_urls"] = media_urls
         await publisher.publish(
