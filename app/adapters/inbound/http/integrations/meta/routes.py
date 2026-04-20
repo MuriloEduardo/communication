@@ -155,7 +155,14 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
             for msg in change.value.messages:
                 if msg.type == "reaction":
                     if whatsapp and msg.id:
-                        asyncio.create_task(whatsapp.mark_as_read(msg.id, typing=False))
+
+                        async def _mark_read_reaction(
+                            wapp=whatsapp, mid=msg.id
+                        ) -> None:
+                            await asyncio.sleep(random.uniform(1.5, 4.0))
+                            await wapp.mark_as_read(mid)
+
+                        asyncio.create_task(_mark_read_reaction())
                     asyncio.create_task(
                         events.record(
                             direction="inbound",
