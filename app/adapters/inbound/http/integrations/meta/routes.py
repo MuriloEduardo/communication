@@ -167,6 +167,7 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                             metadata=_extract_metadata(msg),
                         )
                     )
+                    has_text_messages = True
                     continue
 
                 has_text_messages = True
