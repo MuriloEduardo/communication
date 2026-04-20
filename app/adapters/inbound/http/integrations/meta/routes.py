@@ -188,9 +188,12 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                                 msg.from_ or "unknown",
                             )
                             media_urls[msg.id] = url
-                        except Exception:
+                        except Exception as e:
                             logger.warning(
-                                "media.upload_failed", msg_id=msg.id, media_id=media.id
+                                "media.upload_failed",
+                                msg_id=msg.id,
+                                media_id=media.id,
+                                error=str(e),
                             )
 
                 asyncio.create_task(
