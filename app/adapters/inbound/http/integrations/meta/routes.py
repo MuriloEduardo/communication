@@ -50,7 +50,7 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                             direction="inbound",
                             channel="whatsapp",
                             event_type="reaction",
-                            sender_id=msg.sender,
+                            sender_id=msg.from_,
                             message_id=msg.id,
                             metadata={"type": "reaction"},
                         )
@@ -67,7 +67,7 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                         direction="inbound",
                         channel="whatsapp",
                         event_type="received",
-                        sender_id=msg.sender,
+                        sender_id=msg.from_,
                         message_id=msg.id,
                         content=getattr(msg.text, "body", None) if msg.text else None,
                     )
