@@ -82,6 +82,8 @@ class MetaWhatsAppClient:
         payload = {
             "messaging_product": "whatsapp",
             "to": to,
+            "type": "text",
+            "text": {"body": " "},
             "typing_indicator": {"type": "text"},
         }
         logger.info("whatsapp.send_typing.start", to=to, payload=payload)
