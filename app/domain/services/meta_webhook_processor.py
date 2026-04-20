@@ -180,7 +180,7 @@ class MetaWebhookProcessor:
             return False
 
         if msg_type == "reaction":
-            await self._trigger_typing_only(msg_id)
+            await self._trigger_typing_only(sender)
             asyncio.create_task(
                 self._events.record(
                     direction="inbound",
@@ -195,7 +195,7 @@ class MetaWebhookProcessor:
             return True
 
         # Regular message
-        await self._trigger_typing(msg_id)
+        await self._trigger_typing(msg_id, sender)
         await self._resolve_quoted_message(msg, quoted_messages)
         await self._upload_media_if_needed(msg, phone_number_id, sender, media_urls)
         asyncio.create_task(
@@ -212,25 +212,27 @@ class MetaWebhookProcessor:
         )
         return True
 
-    async def _trigger_typing(self, msg_id: str | None) -> None:
-        if not self._whatsapp or not msg_id:
+    async def _trigger_typing(
+        self, msg_id: str | None, sender: str | None = None
+    ) -> None:
+        if not self._whatsapp or not msg_id or not sender:
             return
 
-        async def _read_then_type(wapp=self._whatsapp, mid=msg_id) -> None:
+        async def _read_then_type(wapp=self._whatsapp, mid=msg_id, to=sender) -> None:
             await asyncio.sleep(random.uniform(0.3, 0.8))
             await wapp.mark_as_read(mid)
             await asyncio.sleep(random.uniform(0.5, 1.0))
-            await wapp.send_typing(mid)
+            await wapp.send_typing(to)
 
         asyncio.create_task(_read_then_type())
 
-    async def _trigger_typing_only(self, msg_id: str | None) -> None:
-        if not self._whatsapp or not msg_id:
+    async def _trigger_typing_only(self, sender: str | None) -> None:
+        if not self._whatsapp or not sender:
             return
 
-        async def _type_only(wapp=self._whatsapp, mid=msg_id) -> None:
+        async def _type_only(wapp=self._whatsapp, to=sender) -> None:
             await asyncio.sleep(random.uniform(0.3, 0.8))
-            await wapp.send_typing(mid)
+            await wapp.send_typing(to)
 
         asyncio.create_task(_type_only())
 

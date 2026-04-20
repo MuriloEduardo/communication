@@ -66,35 +66,31 @@ class MetaWhatsAppClient:
         except Exception:
             logger.warning("whatsapp.mark_read_failed", message_id=message_id)
 
-    async def send_typing(self, message_id: str) -> None:
+    async def send_typing(self, to: str) -> None:
         payload = {
             "messaging_product": "whatsapp",
-            "status": "read",
-            "message_id": message_id,
+            "to": to,
             "typing_indicator": {"type": "text"},
         }
         for attempt in range(2):
             try:
                 resp = await self._client.post("/messages", json=payload)
                 if resp.is_success:
-                    logger.debug("whatsapp.typing_sent", message_id=message_id)
+                    logger.debug("whatsapp.typing_sent", to=to)
                     return
                 logger.warning(
                     "whatsapp.typing_failed",
-                    message_id=message_id,
+                    to=to,
                     attempt=attempt + 1,
                     status=resp.status_code,
                     body=resp.text,
                 )
             except Exception as exc:
                 logger.warning(
-                    "whatsapp.typing_error",
-                    message_id=message_id,
-                    attempt=attempt + 1,
-                    error=str(exc),
+                    "whatsapp.typing_error", to=to, attempt=attempt + 1, error=str(exc)
                 )
             if attempt == 0:
-                await asyncio.sleep(2.0)
+                await asyncio.sleep(1.0)
 
     async def download_media(self, media_id: str) -> tuple[bytes, str]:
         """Download media from Meta. Returns (bytes, mime_type)."""
