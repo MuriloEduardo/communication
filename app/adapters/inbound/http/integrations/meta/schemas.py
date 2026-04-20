@@ -27,6 +27,23 @@ class MetaReaction(BaseModel):
     emoji: str
 
 
+class MetaMedia(BaseModel):
+    model_config = {"extra": "allow"}
+    id: str | None = None  # noqa: A003
+    mime_type: str | None = None
+    sha256: str | None = None
+    caption: str | None = None
+    filename: str | None = None
+
+
+class MetaLocation(BaseModel):
+    model_config = {"extra": "allow"}
+    latitude: float
+    longitude: float
+    name: str | None = None
+    address: str | None = None
+
+
 class MetaMessageContext(BaseModel):
     model_config = {"extra": "allow"}
     from_: str | None = Field(None, alias="from")
@@ -43,6 +60,12 @@ class MetaMessage(BaseModel):
     text: MetaTextBody | None = None
     reaction: MetaReaction | None = None
     context: MetaMessageContext | None = None
+    image: MetaMedia | None = None
+    video: MetaMedia | None = None
+    audio: MetaMedia | None = None
+    document: MetaMedia | None = None
+    sticker: MetaMedia | None = None
+    location: MetaLocation | None = None
 
 
 class MetaStatusPricing(BaseModel):
