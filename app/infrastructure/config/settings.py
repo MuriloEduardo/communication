@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     database_url: str = ""
 
     http_host: str = "0.0.0.0"
-    http_port: int = 8000
+    http_port: int = 80
 
     meta_verify_token: str = ""
     meta_access_token: str = ""
