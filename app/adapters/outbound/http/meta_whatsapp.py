@@ -10,7 +10,7 @@ import httpx
 
 logger = structlog.get_logger(__name__)
 
-META_API_BASE = "https://graph.facebook.com/v21.0"
+META_API_BASE = "https://graph.facebook.com/v22.0"
 
 
 class MetaWhatsAppClient:
@@ -82,7 +82,7 @@ class MetaWhatsAppClient:
         payload = {
             "messaging_product": "whatsapp",
             "to": to,
-            "typing_indicator": {"type": "text", "text": ""},
+            "typing_indicator": {"type": "text"},
         }
         logger.info("whatsapp.send_typing.start", to=to, payload=payload)
         for attempt in range(2):
