@@ -35,6 +35,7 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
     container = request.app.state.container
     publisher = container.publisher
     whatsapp = container.whatsapp_client
+    events = container.events
 
     has_text_messages = False
     for entry in payload.entry:
@@ -44,12 +45,33 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                     # Reactions: mark read, no typing, no forwarding
                     if whatsapp and msg.id:
                         asyncio.create_task(whatsapp.mark_as_read(msg.id, typing=False))
+                    asyncio.create_task(
+                        events.record(
+                            direction="inbound",
+                            channel="whatsapp",
+                            event_type="reaction",
+                            sender_id=msg.sender,
+                            message_id=msg.id,
+                            metadata={"type": "reaction"},
+                        )
+                    )
                     continue
 
                 has_text_messages = True
                 # Read receipt + typing indicator (fire-and-forget)
                 if whatsapp and msg.id:
                     asyncio.create_task(whatsapp.mark_as_read(msg.id))
+
+                asyncio.create_task(
+                    events.record(
+                        direction="inbound",
+                        channel="whatsapp",
+                        event_type="received",
+                        sender_id=msg.sender,
+                        message_id=msg.id,
+                        content=getattr(msg.text, "body", None) if msg.text else None,
+                    )
+                )
 
     # Only forward to workflow when there are processable messages
     if has_text_messages:

@@ -3,7 +3,9 @@ import structlog
 from app.adapters.inbound.amqp.consumer import RabbitMQConsumer
 from app.adapters.outbound.amqp.publisher import RabbitMQPublisher
 from app.adapters.outbound.http.meta_whatsapp import MetaWhatsAppClient
+from app.adapters.outbound.postgres import ChannelEventRepository
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.database import PostgresConnection
 from app.infrastructure.messaging.rabbitmq_connection import RabbitMQConnection
 from app.ports.inbound.message_handler import MessageHandler
 
@@ -16,6 +18,8 @@ class Container:
         self._connection: RabbitMQConnection | None = None
         self._publisher: RabbitMQPublisher | None = None
         self._whatsapp_client: MetaWhatsAppClient | None = None
+        self._database: PostgresConnection | None = None
+        self._events: ChannelEventRepository | None = None
 
     @property
     def connection(self) -> RabbitMQConnection:
@@ -38,12 +42,26 @@ class Container:
             )
         return self._whatsapp_client
 
+    @property
+    def database(self) -> PostgresConnection:
+        if self._database is None:
+            self._database = PostgresConnection(self.settings)
+        return self._database
+
+    @property
+    def events(self) -> ChannelEventRepository:
+        if self._events is None:
+            self._events = ChannelEventRepository(self.database)
+        return self._events
+
     def consumer(self, handler: MessageHandler) -> RabbitMQConsumer:
         return RabbitMQConsumer(self.connection, handler)
 
     async def shutdown(self) -> None:
         if self._whatsapp_client:
             await self._whatsapp_client.close()
+        if self._database:
+            await self._database.close()
         if self._connection:
             await self._connection.close()
         logger.info("container.shutdown")

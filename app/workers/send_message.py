@@ -10,4 +10,7 @@ from app.workers import worker
     routing_key="send.message",
 )
 def create_send_message_handler(container: Container) -> SendMessageHandler:
-    return SendMessageHandler(whatsapp_client=container.whatsapp_client)
+    return SendMessageHandler(
+        whatsapp_client=container.whatsapp_client,
+        events=container.events,
+    )

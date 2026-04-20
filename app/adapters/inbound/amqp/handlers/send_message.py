@@ -1,6 +1,9 @@
+import asyncio
+
 import structlog
 
 from app.adapters.outbound.http.meta_whatsapp import MetaWhatsAppClient
+from app.adapters.outbound.postgres import ChannelEventRepository
 from app.domain.entities.message import ChannelType, OutboundChannelMessage
 from app.ports.inbound.message_handler import MessageHandler
 
@@ -13,8 +16,13 @@ class SendMessageHandler(MessageHandler):
     Routes to the appropriate channel adapter (WhatsApp, etc.).
     """
 
-    def __init__(self, whatsapp_client: MetaWhatsAppClient | None = None) -> None:
+    def __init__(
+        self,
+        whatsapp_client: MetaWhatsAppClient | None = None,
+        events: ChannelEventRepository | None = None,
+    ) -> None:
         self._whatsapp = whatsapp_client
+        self._events = events
 
     async def handle(
         self, message: bytes, routing_key: str, headers: dict | None = None
@@ -33,8 +41,30 @@ class SendMessageHandler(MessageHandler):
         try:
             await self._send_to_channel(outbound)
             log.info("send_message.sent")
+            if self._events:
+                asyncio.create_task(
+                    self._events.record(
+                        direction="outbound",
+                        channel=outbound.channel.channel_type,
+                        event_type="sent",
+                        recipient_id=outbound.channel.recipient_id,
+                        message_id=outbound.message_id,
+                        content=outbound.content,
+                    )
+                )
         except Exception as exc:
             log.error("send_message.failed", error=str(exc))
+            if self._events:
+                asyncio.create_task(
+                    self._events.record(
+                        direction="outbound",
+                        channel=outbound.channel.channel_type,
+                        event_type="failed",
+                        recipient_id=outbound.channel.recipient_id,
+                        message_id=outbound.message_id,
+                        metadata={"error": str(exc)},
+                    )
+                )
             raise
 
     async def _send_to_channel(self, message: OutboundChannelMessage) -> None:
