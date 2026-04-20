@@ -4,10 +4,12 @@ from app.adapters.inbound.amqp.consumer import RabbitMQConsumer
 from app.adapters.outbound.amqp.publisher import RabbitMQPublisher
 from app.adapters.outbound.http.meta_whatsapp import MetaWhatsAppClient
 from app.adapters.outbound.postgres import ChannelEventRepository
+from app.adapters.outbound.s3.media_storage import S3MediaStorage
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.database import PostgresConnection
 from app.infrastructure.messaging.rabbitmq_connection import RabbitMQConnection
 from app.ports.inbound.message_handler import MessageHandler
+from app.ports.outbound.media_storage import MediaStoragePort
 
 logger = structlog.get_logger(__name__)
 
@@ -20,6 +22,7 @@ class Container:
         self._whatsapp_client: MetaWhatsAppClient | None = None
         self._database: PostgresConnection | None = None
         self._events: ChannelEventRepository | None = None
+        self._media_storage: MediaStoragePort | None = None
 
     @property
     def connection(self) -> RabbitMQConnection:
@@ -53,6 +56,16 @@ class Container:
         if self._events is None:
             self._events = ChannelEventRepository(self.database)
         return self._events
+
+    @property
+    def media_storage(self) -> MediaStoragePort | None:
+        if self._media_storage is None and self.settings.aws_s3_bucket:
+            self._media_storage = S3MediaStorage(
+                bucket=self.settings.aws_s3_bucket,
+                region=self.settings.aws_s3_region,
+                presign_expires=self.settings.aws_s3_presign_expires,
+            )
+        return self._media_storage
 
     def consumer(self, handler: MessageHandler) -> RabbitMQConsumer:
         return RabbitMQConsumer(self.connection, handler)

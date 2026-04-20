@@ -1,4 +1,6 @@
 import asyncio
+import json
+from datetime import date
 from typing import Any
 
 import structlog
@@ -15,6 +17,21 @@ router = APIRouter(prefix="/integrations/meta", tags=["meta"])
 
 EXCHANGE = "communication.channel.inbound"
 ROUTING_KEY = "channel.inbound.meta"
+MEDIA_TYPES = {"image", "video", "audio", "document", "sticker"}
+
+_MIME_EXT: dict[str, str] = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+    "video/mp4": ".mp4",
+    "video/3gpp": ".3gpp",
+    "audio/ogg": ".ogg",
+    "audio/mpeg": ".mp3",
+    "audio/aac": ".aac",
+    "audio/opus": ".opus",
+    "application/pdf": ".pdf",
+}
 
 
 def _extract_content(msg: MetaMessage) -> str | None:
@@ -68,6 +85,17 @@ def _extract_metadata(msg: MetaMessage) -> dict[str, Any]:
     return meta
 
 
+async def _upload_media(
+    whatsapp, media_storage, media_id: str, mime_type: str, phone_number_id: str
+) -> str:
+    """Download media from Meta and upload to S3. Returns pre-signed URL."""
+    today = date.today()
+    ext = _MIME_EXT.get(mime_type, "")
+    key = f"whatsapp/{phone_number_id}/{today.year}/{today.month:02d}/{today.day:02d}/{media_id}{ext}"
+    data, _ = await whatsapp.download_media(media_id)
+    return await media_storage.upload_and_sign(data, key, mime_type)
+
+
 @router.get("/webhook")
 async def verify_webhook(
     request: Request,
@@ -91,8 +119,11 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
     publisher = container.publisher
     whatsapp = container.whatsapp_client
     events = container.events
+    media_storage = container.media_storage
 
     has_text_messages = False
+    media_urls: dict[str, str] = {}  # message_id → pre-signed S3 URL
+
     for entry in payload.entry:
         for change in entry.changes:
             phone_number_id = (
@@ -138,6 +169,24 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                 if whatsapp and msg.id:
                     asyncio.create_task(whatsapp.mark_as_read(msg.id))
 
+                # ── Media download + S3 upload ──
+                if msg.type in MEDIA_TYPES and whatsapp and media_storage and msg.id:
+                    media = getattr(msg, msg.type, None)
+                    if media:
+                        try:
+                            url = await _upload_media(
+                                whatsapp,
+                                media_storage,
+                                media.id,
+                                media.mime_type,
+                                phone_number_id or "unknown",
+                            )
+                            media_urls[msg.id] = url
+                        except Exception:
+                            logger.warning(
+                                "media.upload_failed", msg_id=msg.id, media_id=media.id
+                            )
+
                 asyncio.create_task(
                     events.record(
                         direction="inbound",
@@ -152,9 +201,11 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
                 )
 
     if has_text_messages:
-        raw = payload.model_dump_json().encode()
+        payload_dict = json.loads(payload.model_dump_json())
+        if media_urls:
+            payload_dict["_media_urls"] = media_urls
         await publisher.publish(
-            message=raw,
+            message=json.dumps(payload_dict).encode(),
             routing_key=ROUTING_KEY,
             exchange_name=EXCHANGE,
         )

@@ -22,6 +22,11 @@ class MetaWhatsAppClient:
             },
             timeout=10.0,
         )
+        self._media_client = httpx.AsyncClient(
+            base_url=META_API_BASE,
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=30.0,
+        )
 
     async def send_text(self, to: str, body: str) -> dict:
         response = await self._client.post(
@@ -61,5 +66,12 @@ class MetaWhatsAppClient:
         except Exception:
             logger.warning("whatsapp.mark_read_failed", message_id=message_id)
 
+    async def download_media(self, media_id: str) -> tuple[bytes, str]:
+        """Download media from Meta. Returns (bytes, mime_type)."""
+        info = (await self._media_client.get(f"/{media_id}")).raise_for_status().json()
+        data = (await self._media_client.get(info["url"])).raise_for_status()
+        return data.content, info.get("mime_type", "application/octet-stream")
+
     async def close(self) -> None:
         await self._client.aclose()
+        await self._media_client.aclose()

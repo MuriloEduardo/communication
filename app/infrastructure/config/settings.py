@@ -25,3 +25,7 @@ class Settings(BaseSettings):
     meta_verify_token: str = ""
     meta_access_token: str = ""
     whatsapp_phone_number_id: str = ""
+
+    aws_s3_bucket: str = ""
+    aws_s3_region: str = "us-east-1"
+    aws_s3_presign_expires: int = 3600
