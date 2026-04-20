@@ -29,3 +29,5 @@ class Settings(BaseSettings):
     aws_s3_bucket: str = ""
     aws_s3_region: str = "us-east-1"
     aws_s3_presign_expires: int = 3600
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""

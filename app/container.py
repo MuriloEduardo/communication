@@ -64,6 +64,8 @@ class Container:
                 bucket=self.settings.aws_s3_bucket,
                 region=self.settings.aws_s3_region,
                 presign_expires=self.settings.aws_s3_presign_expires,
+                aws_access_key_id=self.settings.aws_access_key_id,
+                aws_secret_access_key=self.settings.aws_secret_access_key,
             )
         return self._media_storage
 
