@@ -216,11 +216,13 @@ class MetaWebhookProcessor:
         if not self._whatsapp or not msg_id:
             return
 
-        async def _mark_read(wapp=self._whatsapp, mid=msg_id) -> None:
-            await asyncio.sleep(random.uniform(1.5, 4.0))
+        async def _read_then_type(wapp=self._whatsapp, mid=msg_id) -> None:
+            await asyncio.sleep(random.uniform(0.5, 2.0))
             await wapp.mark_as_read(mid)
+            await asyncio.sleep(random.uniform(1.0, 3.0))
+            await wapp.send_typing(mid)
 
-        asyncio.create_task(_mark_read())
+        asyncio.create_task(_read_then_type())
 
     async def _resolve_quoted_message(
         self,
