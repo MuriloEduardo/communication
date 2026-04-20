@@ -42,11 +42,15 @@ class SendMessageHandler(MessageHandler):
             await self._send_to_channel(outbound)
             log.info("send_message.sent")
             if self._events:
+                sender_id = outbound.channel.sender_id or (
+                    self._whatsapp.phone_number_id if self._whatsapp else None
+                )
                 asyncio.create_task(
                     self._events.record(
                         direction="outbound",
                         channel=outbound.channel.channel_type,
                         event_type="sent",
+                        sender_id=sender_id,
                         recipient_id=outbound.channel.recipient_id,
                         message_id=outbound.message_id,
                         content=outbound.content,
@@ -55,11 +59,15 @@ class SendMessageHandler(MessageHandler):
         except Exception as exc:
             log.error("send_message.failed", error=str(exc))
             if self._events:
+                sender_id = outbound.channel.sender_id or (
+                    self._whatsapp.phone_number_id if self._whatsapp else None
+                )
                 asyncio.create_task(
                     self._events.record(
                         direction="outbound",
                         channel=outbound.channel.channel_type,
                         event_type="failed",
+                        sender_id=sender_id,
                         recipient_id=outbound.channel.recipient_id,
                         message_id=outbound.message_id,
                         metadata={"error": str(exc)},

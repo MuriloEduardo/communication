@@ -13,6 +13,7 @@ META_API_BASE = "https://graph.facebook.com/v21.0"
 
 class MetaWhatsAppClient:
     def __init__(self, access_token: str, phone_number_id: str) -> None:
+        self.phone_number_id = phone_number_id
         self._client = httpx.AsyncClient(
             base_url=f"{META_API_BASE}/{phone_number_id}",
             headers={
