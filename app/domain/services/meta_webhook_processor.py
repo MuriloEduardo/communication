@@ -217,9 +217,9 @@ class MetaWebhookProcessor:
             return
 
         async def _read_then_type(wapp=self._whatsapp, mid=msg_id) -> None:
-            await asyncio.sleep(random.uniform(0.5, 2.0))
+            await asyncio.sleep(random.uniform(0.3, 0.8))
             await wapp.mark_as_read(mid)
-            await asyncio.sleep(random.uniform(1.5, 3.0))
+            await asyncio.sleep(random.uniform(0.5, 1.0))
             await wapp.send_typing(mid)
 
         asyncio.create_task(_read_then_type())
@@ -229,7 +229,7 @@ class MetaWebhookProcessor:
             return
 
         async def _type_only(wapp=self._whatsapp, mid=msg_id) -> None:
-            await asyncio.sleep(random.uniform(0.5, 2.0))
+            await asyncio.sleep(random.uniform(0.3, 0.8))
             await wapp.send_typing(mid)
 
         asyncio.create_task(_type_only())
