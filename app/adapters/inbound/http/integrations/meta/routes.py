@@ -127,6 +127,7 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
 
     has_text_messages = False
     media_urls: dict[str, str] = {}  # message_id → pre-signed S3 URL
+    quoted_messages: dict[str, str] = {}  # quoted_message_id → original content
 
     for entry in payload.entry:
         for change in entry.changes:
@@ -186,6 +187,23 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
 
                     asyncio.create_task(_mark_read_with_typing())
 
+                # ── Resolve quoted message content ──
+                if msg.context and msg.context.id and events:
+                    quoted_id = msg.context.id
+                    if quoted_id not in quoted_messages:
+                        try:
+                            quoted_content = await events.get_content_by_message_id(
+                                quoted_id
+                            )
+                            if quoted_content:
+                                quoted_messages[quoted_id] = quoted_content
+                        except Exception as e:
+                            logger.warning(
+                                "quoted_message.lookup_failed",
+                                quoted_id=quoted_id,
+                                error=str(e),
+                            )
+
                 # ── Media download + S3 upload ──
                 if msg.type in MEDIA_TYPES and whatsapp and media_storage and msg.id:
                     media = getattr(msg, msg.type, None)
@@ -225,6 +243,8 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
         payload_dict = json.loads(payload.model_dump_json(by_alias=True))
         if media_urls:
             payload_dict["_media_urls"] = media_urls
+        if quoted_messages:
+            payload_dict["_quoted_messages"] = quoted_messages
         await publisher.publish(
             message=json.dumps(payload_dict).encode(),
             routing_key=ROUTING_KEY,

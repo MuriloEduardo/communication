@@ -11,7 +11,13 @@ class ChannelEventRepository:
     def __init__(self, database: PostgresConnection) -> None:
         self._db = database
 
-    async def record(
+    async def get_content_by_message_id(self, message_id: str) -> str | None:
+        pool = await self._db.get_pool()
+        row = await pool.fetchrow(
+            "SELECT content FROM channel_events WHERE message_id = $1 AND content IS NOT NULL ORDER BY created_at DESC LIMIT 1",
+            message_id,
+        )
+        return row["content"] if row else None
         self,
         *,
         direction: str,
