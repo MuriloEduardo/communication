@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import random
 from typing import TYPE_CHECKING, Any
 
 import structlog
@@ -228,8 +227,6 @@ class MetaWebhookProcessor:
             return
 
         async def _read_then_type(wapp=self._whatsapp, mid=msg_id) -> None:
-            logger.info("trigger_typing.task_start", msg_id=mid)
-            await asyncio.sleep(random.uniform(0.3, 0.8))
             await wapp.mark_as_read(mid, typing=True)
             logger.info("trigger_typing.task_done", msg_id=mid)
 
@@ -250,8 +247,6 @@ class MetaWebhookProcessor:
             return
 
         async def _type_only(wapp=self._whatsapp, mid=msg_id) -> None:
-            logger.info("trigger_typing_only.task_start", msg_id=mid)
-            await asyncio.sleep(random.uniform(0.3, 0.8))
             await wapp.mark_as_read(mid, typing=True)
             logger.info("trigger_typing_only.task_done", msg_id=mid)
 
