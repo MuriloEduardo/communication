@@ -180,7 +180,7 @@ class MetaWebhookProcessor:
             return False
 
         if msg_type == "reaction":
-            await self._trigger_typing(msg_id)
+            await self._trigger_typing_only(msg_id)
             asyncio.create_task(
                 self._events.record(
                     direction="inbound",
@@ -223,6 +223,16 @@ class MetaWebhookProcessor:
             await wapp.send_typing(mid)
 
         asyncio.create_task(_read_then_type())
+
+    async def _trigger_typing_only(self, msg_id: str | None) -> None:
+        if not self._whatsapp or not msg_id:
+            return
+
+        async def _type_only(wapp=self._whatsapp, mid=msg_id) -> None:
+            await asyncio.sleep(random.uniform(0.5, 2.0))
+            await wapp.send_typing(mid)
+
+        asyncio.create_task(_type_only())
 
     async def _resolve_quoted_message(
         self,
