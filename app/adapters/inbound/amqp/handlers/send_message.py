@@ -80,6 +80,10 @@ class SendMessageHandler(MessageHandler):
             if not self._whatsapp:
                 logger.warning("whatsapp.not_configured")
                 return
+            inbound_msg_id = message.metadata.get("inbound_message_id")
+            if inbound_msg_id:
+                await self._whatsapp.mark_as_read(inbound_msg_id, typing=True)
+                await asyncio.sleep(1.5)
             await self._whatsapp.send_text(
                 to=message.channel.recipient_id or "",
                 body=message.content,
