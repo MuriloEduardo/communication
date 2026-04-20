@@ -1,5 +1,6 @@
 import json
 import asyncio
+import random
 from typing import Any
 
 import structlog
@@ -170,7 +171,12 @@ async def receive_webhook(request: Request, payload: MetaWebhookPayload) -> dict
 
                 has_text_messages = True
                 if whatsapp and msg.id:
-                    asyncio.create_task(whatsapp.mark_as_read(msg.id))
+
+                    async def _mark_read_with_typing(wapp=whatsapp, mid=msg.id) -> None:
+                        await asyncio.sleep(random.uniform(1.5, 4.0))
+                        await wapp.mark_as_read(mid)
+
+                    asyncio.create_task(_mark_read_with_typing())
 
                 # ── Media download + S3 upload ──
                 if msg.type in MEDIA_TYPES and whatsapp and media_storage and msg.id:
