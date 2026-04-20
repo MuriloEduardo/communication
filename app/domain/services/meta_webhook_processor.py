@@ -230,11 +230,7 @@ class MetaWebhookProcessor:
         async def _read_then_type(wapp=self._whatsapp, mid=msg_id) -> None:
             logger.info("trigger_typing.task_start", msg_id=mid)
             await asyncio.sleep(random.uniform(0.3, 0.8))
-            logger.info("trigger_typing.sending_mark_as_read", msg_id=mid)
-            await wapp.mark_as_read(mid)
-            await asyncio.sleep(random.uniform(0.5, 1.0))
-            logger.info("trigger_typing.sending_typing", msg_id=mid)
-            await wapp.send_typing(mid)
+            await wapp.mark_as_read(mid, typing=True)
             logger.info("trigger_typing.task_done", msg_id=mid)
 
         asyncio.create_task(_read_then_type())
@@ -256,8 +252,7 @@ class MetaWebhookProcessor:
         async def _type_only(wapp=self._whatsapp, mid=msg_id) -> None:
             logger.info("trigger_typing_only.task_start", msg_id=mid)
             await asyncio.sleep(random.uniform(0.3, 0.8))
-            logger.info("trigger_typing_only.sending_typing", msg_id=mid)
-            await wapp.send_typing(mid)
+            await wapp.mark_as_read(mid, typing=True)
             logger.info("trigger_typing_only.task_done", msg_id=mid)
 
         asyncio.create_task(_type_only())
