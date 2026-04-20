@@ -8,6 +8,7 @@ from app.adapters.outbound.s3.media_storage import S3MediaStorage
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.database import PostgresConnection
 from app.infrastructure.messaging.rabbitmq_connection import RabbitMQConnection
+from app.domain.services.meta_webhook_processor import MetaWebhookProcessor
 from app.ports.inbound.message_handler import MessageHandler
 from app.ports.outbound.media_storage import MediaStoragePort
 
@@ -23,6 +24,7 @@ class Container:
         self._database: PostgresConnection | None = None
         self._events: ChannelEventRepository | None = None
         self._media_storage: MediaStoragePort | None = None
+        self._webhook_processor: MetaWebhookProcessor | None = None
 
     @property
     def connection(self) -> RabbitMQConnection:
@@ -68,6 +70,17 @@ class Container:
                 aws_secret_access_key=self.settings.aws_secret_access_key,
             )
         return self._media_storage
+
+    @property
+    def webhook_processor(self) -> MetaWebhookProcessor:
+        if self._webhook_processor is None:
+            self._webhook_processor = MetaWebhookProcessor(
+                publisher=self.publisher,
+                whatsapp_client=self.whatsapp_client,
+                events=self.events,
+                media_storage=self.media_storage,
+            )
+        return self._webhook_processor
 
     def consumer(self, handler: MessageHandler) -> RabbitMQConsumer:
         return RabbitMQConsumer(self.connection, handler)

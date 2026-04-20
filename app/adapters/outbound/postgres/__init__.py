@@ -18,6 +18,8 @@ class ChannelEventRepository:
             message_id,
         )
         return row["content"] if row else None
+
+    async def record(
         self,
         *,
         direction: str,
