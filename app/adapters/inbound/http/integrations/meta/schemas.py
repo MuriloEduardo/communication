@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-
 # ── Nested schemas matching Meta WhatsApp Cloud API webhook payload ──
 
 
