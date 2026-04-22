@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 import structlog
 from fastapi import FastAPI
 
+from app.adapters.inbound.http.exception_handlers import register_exception_handlers
 from app.adapters.inbound.http.integrations.meta.routes import router as meta_router
 from app.container import Container
 
@@ -26,6 +27,8 @@ def create_app(container: Container | None = None) -> FastAPI:
         title="Communication Service",
         lifespan=lifespan,
     )
+
+    register_exception_handlers(app)
 
     app.get("/health")(health)
     app.include_router(meta_router)
